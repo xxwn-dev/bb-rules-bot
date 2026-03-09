@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: bbrulesbot
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+
+  ai:
+    openai:
+      api-key: ${AI_API_KEY}
+      base-url: ${AI_BASE_URL}
+      chat:
+        options:
+          model: gemini-2.5-flash
+      embedding:
+        options:
+          model: gemini-embedding-001
+    vectorstore:
+      pgvector:
+        initialize-schema: false
+        dimensions: 3072
+        distance-type: COSINE_DISTANCE
+        schema-name: bb_rules
+
+server:
+  port: 8080
+
+discord:
+  bot-token: ${DISCORD_BOT_TOKEN}
+
+ingestion:
+  secret: ${INGESTION_SECRET}
