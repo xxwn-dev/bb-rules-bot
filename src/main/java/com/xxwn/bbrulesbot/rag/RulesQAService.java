@@ -22,23 +22,23 @@ public class RulesQAService {
     public String ask(String question) {
         log.info("질문 수신: {}", question);
 
-        // 1. 쿼리 재작성 - 구어체를 규칙서 검색에 적합한 문체로 변환
-        String rewrittenQuery = chatClient.prompt()
+        // 1. HyDE - 가상의 규칙서 구절을 생성하여 벡터 검색 정확도 향상
+        String hypotheticalDoc = chatClient.prompt()
                 .user("""
-                        다음 질문을 야구 규칙서에서 검색하기 좋은 형태로 재작성해줘.
-                        재작성한 질문만 출력해. 설명 없이.
+                        다음 질문에 대한 답변이 야구 규칙서에 있다면 어떤 형태일지 규칙서 문체로 작성해줘.
+                        규칙서 구절만 출력해. 설명 없이.
 
                         질문: %s
                         """.formatted(question))
                 .call()
                 .content();
 
-        log.info("재작성된 쿼리: {}", rewrittenQuery);
+        log.info("가상 규칙서 구절: {}", hypotheticalDoc);
 
-        // 2. 재작성된 쿼리로 유사한 규칙 청크 검색
+        // 2. 가상 규칙서 구절로 유사한 청크 검색
         List<Document> docs = vectorStore.similaritySearch(
                 SearchRequest.builder()
-                        .query(rewrittenQuery)
+                        .query(hypotheticalDoc)
                         .topK(10)
                         .build()
         );

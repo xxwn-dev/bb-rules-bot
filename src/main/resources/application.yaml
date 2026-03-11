@@ -28,10 +28,11 @@ spring:
       embedding:
         options:
           model: gemini-embedding-001
+          dimensions: 768
     vectorstore:
       pgvector:
         initialize-schema: false
-        dimensions: 3072
+        dimensions: 768
         distance-type: COSINE_DISTANCE
         schema-name: bb_rules
 

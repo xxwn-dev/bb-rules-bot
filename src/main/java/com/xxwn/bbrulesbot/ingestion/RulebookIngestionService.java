@@ -35,14 +35,12 @@ public class RulebookIngestionService {
         List<Document> docs = splitter.apply(reader.get());
         docs.forEach(doc -> doc.getMetadata().put("league", league));
 
-        // 무료 티어 분당 100건 제한으로 배치 처리
-        int batchSize = 20;
-        for (int i = 0; i < docs.size(); i += batchSize) {
-            List<Document> batch = docs.subList(i, Math.min(i + batchSize, docs.size()));
-            vectorStore.add(batch);
-            log.info("적재 중... {}/{}", Math.min(i + batchSize, docs.size()), docs.size());
-            if (i + batchSize < docs.size()) {
-                TimeUnit.SECONDS.sleep(60);
+        // 무료 티어 분당 100건 제한 - 문서 1개씩 700ms 간격으로 처리 (~85 RPM)
+        for (int i = 0; i < docs.size(); i++) {
+            vectorStore.add(List.of(docs.get(i)));
+            log.info("적재 중... {}/{}", i + 1, docs.size());
+            if (i < docs.size() - 1) {
+                TimeUnit.MILLISECONDS.sleep(700);
             }
         }
         log.info("룰북 적재 완료 - league: {}, 총 {}개 청크", league, docs.size());
