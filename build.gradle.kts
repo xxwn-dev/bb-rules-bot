@@ -34,6 +34,7 @@ dependencies {
 	implementation("org.springframework.ai:spring-ai-pdf-document-reader")
 	implementation("net.dv8tion:JDA:5.2.1")
 	implementation("me.paulschwarz:spring-dotenv:4.0.0")
+	implementation("org.jsoup:jsoup:1.18.3")
 	compileOnly("org.projectlombok:lombok")
 	runtimeOnly("org.postgresql:postgresql")
 	annotationProcessor("org.projectlombok:lombok")
