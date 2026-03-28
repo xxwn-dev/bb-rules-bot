@@ -7,8 +7,10 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -16,50 +18,64 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RulesQAService {
 
+    private static final int SIMILARITY_TOP_K = 10;
+
+    private static final String HYDE_PROMPT_TEMPLATE = """
+            다음 질문에 대한 답변이 야구 규칙서에 있다면 어떤 형태일지 규칙서 문체로 작성해줘.
+            규칙서 구절만 출력해. 설명 없이.
+
+            질문: %s
+            """;
+
+    private static final String QA_PROMPT_TEMPLATE = """
+            [규칙서 내용]
+            %s
+
+            [질문]
+            %s
+            """;
+
     private final ChatClient chatClient;
     private final VectorStore vectorStore;
 
     public String ask(String question) {
+        Assert.hasText(question, "질문은 비어있을 수 없습니다");
         log.info("질문 수신: {}", question);
 
-        // 1. HyDE - 가상의 규칙서 구절을 생성하여 벡터 검색 정확도 향상
-        String hypotheticalDoc = chatClient.prompt()
-                .user("""
-                        다음 질문에 대한 답변이 야구 규칙서에 있다면 어떤 형태일지 규칙서 문체로 작성해줘.
-                        규칙서 구절만 출력해. 설명 없이.
-
-                        질문: %s
-                        """.formatted(question))
-                .call()
-                .content();
-
+        String hypotheticalDoc = generateHypotheticalDoc(question);
         log.info("가상 규칙서 구절: {}", hypotheticalDoc);
 
-        // 2. 가상 규칙서 구절로 유사한 청크 검색
-        List<Document> docs = vectorStore.similaritySearch(
-                SearchRequest.builder()
-                        .query(hypotheticalDoc)
-                        .topK(10)
-                        .build()
-        );
-
-        // 3. 검색된 청크를 컨텍스트로 조합
-        String context = docs.stream()
-                .map(Document::getFormattedContent)
-                .collect(Collectors.joining("\n\n"));
-
+        List<Document> docs = searchSimilarDocuments(hypotheticalDoc);
         log.info("검색된 청크 수: {}", docs.size());
 
-        // 4. LLM에 컨텍스트와 함께 질문
-        return chatClient.prompt()
-                .user("""
-                        [규칙서 내용]
-                        %s
+        String context = buildContext(docs);
 
-                        [질문]
-                        %s
-                        """.formatted(context, question))
+        String answer = chatClient.prompt()
+                .user(QA_PROMPT_TEMPLATE.formatted(context, question))
                 .call()
                 .content();
+        return Objects.requireNonNullElse(answer, "답변을 생성하지 못했습니다.");
+    }
+
+    private String generateHypotheticalDoc(String question) {
+        return chatClient.prompt()
+                .user(HYDE_PROMPT_TEMPLATE.formatted(question))
+                .call()
+                .content();
+    }
+
+    private List<Document> searchSimilarDocuments(String query) {
+        return vectorStore.similaritySearch(
+                SearchRequest.builder()
+                        .query(query)
+                        .topK(SIMILARITY_TOP_K)
+                        .build()
+        );
+    }
+
+    private String buildContext(List<Document> docs) {
+        return docs.stream()
+                .map(Document::getFormattedContent)
+                .collect(Collectors.joining("\n\n"));
     }
 }

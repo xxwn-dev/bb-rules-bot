@@ -38,6 +38,7 @@ out/
 
 ### Local configuration ###
 src/main/resources/application-local.yaml
+.env
 
 ### PDF rulebooks ###
 src/main/resources/*.pdf
