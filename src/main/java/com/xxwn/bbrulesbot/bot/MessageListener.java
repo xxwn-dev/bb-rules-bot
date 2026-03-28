@@ -35,7 +35,7 @@ public class MessageListener extends ListenerAdapter {
 
         try {
             String answer = rulesQAService.ask(question);
-            event.getMessage().reply(answer).queue();
+            sendLongMessage(event, answer);
         } catch (Exception e) {
             log.error("답변 생성 중 오류 발생 - user: {}, question: {}",
                     event.getAuthor().getName(), question, e);
@@ -46,6 +46,24 @@ public class MessageListener extends ListenerAdapter {
     private boolean isMentioningBot(MessageReceivedEvent event) {
         return event.getMessage().getMentions()
                 .isMentioned(event.getJDA().getSelfUser());
+    }
+
+    private void sendLongMessage(MessageReceivedEvent event, String text) {
+        int limit = 1900;
+        if (text.length() <= limit) {
+            event.getMessage().reply(text).queue();
+            return;
+        }
+        boolean first = true;
+        for (int i = 0; i < text.length(); i += limit) {
+            String chunk = text.substring(i, Math.min(i + limit, text.length()));
+            if (first) {
+                event.getMessage().reply(chunk).queue();
+                first = false;
+            } else {
+                event.getChannel().sendMessage(chunk).queue();
+            }
+        }
     }
 
     private String extractQuestion(Message message) {
