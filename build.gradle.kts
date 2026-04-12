@@ -35,6 +35,7 @@ dependencies {
 	implementation("net.dv8tion:JDA:5.2.1")
 	implementation("me.paulschwarz:spring-dotenv:4.0.0")
 	implementation("org.jsoup:jsoup:1.18.3")
+	implementation("com.pgvector:pgvector:0.1.4")
 	compileOnly("org.projectlombok:lombok")
 	runtimeOnly("org.postgresql:postgresql")
 	annotationProcessor("org.projectlombok:lombok")

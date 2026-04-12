@@ -7,6 +7,8 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-init-sql: "SET pg_trgm.similarity_threshold = 0.05"
 
   jpa:
     hibernate:
@@ -44,3 +46,8 @@ discord:
 
 ingestion:
   secret: ${INGESTION_SECRET}
+
+rag:
+  search:
+    top-k: 10
+    trgm-threshold: 0.05

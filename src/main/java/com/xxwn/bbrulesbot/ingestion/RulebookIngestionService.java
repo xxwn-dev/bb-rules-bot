@@ -12,6 +12,9 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -50,6 +53,7 @@ public class RulebookIngestionService {
     }
 
     public void ingestFromUrl(String url, String league) throws InterruptedException, IOException {
+        validateUrl(url);
         log.info("URL 룰북 적재 시작 - league: {}, url: {}", league, url);
 
         org.jsoup.nodes.Document html = Jsoup.connect(url)
@@ -76,5 +80,35 @@ public class RulebookIngestionService {
             }
         }
         log.info("URL 룰북 적재 완료 - league: {}, 총 {}개 청크", league, docs.size());
+    }
+
+    public void validateUrl(String url) {
+        URI uri;
+        try {
+            uri = new URI(url);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("유효하지 않은 URL입니다: " + url);
+        }
+
+        if (!"https".equalsIgnoreCase(uri.getScheme())) {
+            throw new IllegalArgumentException("HTTPS URL만 허용합니다");
+        }
+
+        String host = uri.getHost();
+        if (host == null || host.isBlank()) {
+            throw new IllegalArgumentException("유효하지 않은 호스트입니다");
+        }
+
+        try {
+            InetAddress address = InetAddress.getByName(host);
+            if (address.isLoopbackAddress()
+                    || address.isSiteLocalAddress()
+                    || address.isLinkLocalAddress()
+                    || address.isAnyLocalAddress()) {
+                throw new IllegalArgumentException("내부 네트워크 주소로의 요청은 허용되지 않습니다");
+            }
+        } catch (java.net.UnknownHostException e) {
+            throw new IllegalArgumentException("호스트를 확인할 수 없습니다: " + host);
+        }
     }
 }

@@ -34,9 +34,7 @@ public class IngestionController {
     @PostMapping("/trigger")
     public ResponseEntity<String> trigger(
             @RequestHeader("X-Ingestion-Secret") String requestSecret) {
-        if (!isValidSecret(requestSecret)) {
-            return UNAUTHORIZED;
-        }
+        if (!isValidSecret(requestSecret)) return UNAUTHORIZED;
         try {
             ingestionService.ingest("2025-kbo-rulebook.pdf", "KBO");
         } catch (InterruptedException e) {
@@ -51,9 +49,7 @@ public class IngestionController {
             @RequestHeader("X-Ingestion-Secret") String requestSecret,
             @RequestParam String url,
             @RequestParam String league) {
-        if (!isValidSecret(requestSecret)) {
-            return UNAUTHORIZED;
-        }
+        if (!isValidSecret(requestSecret)) return UNAUTHORIZED;
         try {
             ingestionService.ingestFromUrl(url, league);
         } catch (InterruptedException e) {
@@ -61,7 +57,7 @@ public class IngestionController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ingestion interrupted");
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body("URL 접근 실패: " + e.getMessage());
-        } catch (IllegalStateException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
         return ResponseEntity.ok("URL ingestion complete");
