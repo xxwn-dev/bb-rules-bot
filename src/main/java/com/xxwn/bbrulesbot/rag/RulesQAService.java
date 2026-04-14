@@ -18,8 +18,9 @@ import java.util.stream.Collectors;
 public class RulesQAService {
 
     private static final String HYDE_PROMPT_TEMPLATE = """
-            다음 질문에 대한 답변이 야구 규칙서에 있다면 어떤 형태일지 규칙서 문체로 작성해줘.
-            규칙서 구절만 출력해. 설명 없이.
+            다음 질문의 핵심 주제를 야구 규칙서 원문 문체(조항·명사형)로 변환해줘.
+            규칙의 존재 여부를 판단하거나 답변을 생성하지 마.
+            변환된 구절만 출력해. 설명 없이.
 
             질문: [%s]
             """;
